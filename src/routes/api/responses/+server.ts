@@ -18,8 +18,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		data.tid = uuidv4();
 
-		// Save the response to the file system
-		saveResponse(data);
+		await saveResponse(data);
 
 		return new Response(JSON.stringify({ success: true, message: 'Response saved successfully' }), {
 			status: 200,
