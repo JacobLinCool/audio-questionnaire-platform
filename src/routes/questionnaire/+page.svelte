@@ -3,10 +3,10 @@
 	import type { Questionaire, QuestionnaireResponse, PairQuestionResponse } from '$lib/types';
 	import PreQuestionComponent from '$lib/components/PreQuestionComponent.svelte';
 	import PairQuestionComponent from '$lib/components/PairQuestionComponent.svelte';
-	import { page } from '$app/stores';
 
-	let questionaire: Questionaire;
-	let loading = true;
+	export let data;
+
+	let questionaire: Questionaire = data.questionnaire;
 	let error: string | null = null;
 
 	// Track current section and question
@@ -16,7 +16,7 @@
 
 	// Store user responses
 	let responses: QuestionnaireResponse = {
-		qid: '',
+		qid: questionaire.id,
 		tid: '',
 		pre: [],
 		pair: [],
@@ -35,23 +35,8 @@
 		return array;
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		try {
-			// Get questionnaire ID from URL params
-			const id = $page.url.searchParams.get('id');
-			if (!id) {
-				throw new Error('No questionnaire ID provided');
-			}
-
-			// Fetch questionnaire data
-			const response = await fetch(`/api/questionnaires/${id}`);
-			if (!response.ok) {
-				throw new Error('Failed to load questionnaire');
-			}
-
-			questionaire = await response.json();
-			responses.qid = questionaire.id;
-
 			// Generate all possible pairs from audio files
 			const audioKeys = Object.keys(questionaire.audios);
 			for (let i = 0; i < audioKeys.length; i++) {
@@ -72,12 +57,9 @@
 
 			// Now shuffle them in advance
 			shuffle(sampledPairs);
-
-			loading = false;
 		} catch (err) {
 			console.error(err);
 			error = err instanceof Error ? err.message : 'An unknown error occurred';
-			loading = false;
 		}
 	});
 
@@ -167,12 +149,13 @@
 	}
 </script>
 
+<svelte:head>
+	<title>{questionaire.title}</title>
+	<meta name="description" content={questionaire.description} />
+</svelte:head>
+
 <div class="container mx-auto max-w-3xl px-4 py-8">
-	{#if loading}
-		<div class="flex h-64 items-center justify-center">
-			<div class="loader"></div>
-		</div>
-	{:else if error}
+	{#if error}
 		<div class="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
 			<p>{error}</p>
 		</div>
